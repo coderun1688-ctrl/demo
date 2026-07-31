@@ -1,0 +1,956 @@
+Options All -Indexes
+<IfModule mod_rewrite.c>
+	<IfModule mod_negotiation.c>
+	  Options -MultiViews -Indexes
+	</IfModule>
+
+	RewriteEngine On
+
+    #檢查本站並沒有用代理進來直接跳 403
+#    RewriteCond %{HTTP:VIA}                 ^$ [OR]
+#    RewriteCond %{HTTP:FORWARDED}           ^$ [OR]
+#    RewriteCond %{HTTP:USERAGENT_VIA}       ^$ [OR]
+#    RewriteCond %{HTTP:X_FORWARDED_FOR}     ^$ [OR]
+#    RewriteCond %{HTTP:PROXY_CONNECTION}    ^$ [OR]
+#    RewriteCond %{HTTP:XPROXY_CONNECTION}   ^$ [OR]
+#    RewriteCond %{HTTP:HTTP_PC_REMOTE_ADDR} ^$ [OR]
+#    RewriteCond %{HTTP:XROXY_CONNECTION}    ^$ [OR]
+#    RewriteCond %{HTTP:X-FORWARDED-FOR}     ^$ [OR]
+#    RewriteCond %{HTTP:HTTP_CLIENT_IP}      ^$ [OR]
+#    RewriteCond %{HTTP:FORWARDED-FOR}       ^$ [OR]
+#    RewriteCond %{HTTP:X-FORWARDED}         ^$
+#	 RewriteRule ^(.*)$ - [F,L]
+
+	#檢查本站有用代理進來 直接跳 403
+#	RewriteCond %{HTTP:VIA}                 !^$ [OR]
+#	RewriteCond %{HTTP:FORWARDED}           !^$ [OR]
+#	RewriteCond %{HTTP:USERAGENT_VIA}       !^$ [OR]
+#	RewriteCond %{HTTP:X_FORWARDED_FOR}     !^$ [OR]
+#	RewriteCond %{HTTP:PROXY_CONNECTION}    !^$ [OR]
+#	RewriteCond %{HTTP:XPROXY_CONNECTION}   !^$ [OR]
+#	RewriteCond %{HTTP:HTTP_PC_REMOTE_ADDR} !^$ [OR]
+#	RewriteCond %{HTTP:XROXY_CONNECTION}    !^$ [OR]
+#	RewriteCond %{HTTP:X-FORWARDED-FOR}     !^$ [OR]
+#	RewriteCond %{HTTP:HTTP_CLIENT_IP}      !^$ [OR]
+#	RewriteCond %{HTTP:FORWARDED-FOR}       !^$ [OR]
+#	RewriteCond %{HTTP:X-FORWARDED}         !^$
+#	RewriteRule ^(.*)$ - [F,L]
+
+
+	#Redirect to SSL version
+	#RewriteCond %{HTTPS} off
+	#RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI}
+
+    #laravel Start
+	# Handle Authorization Header
+	RewriteCond %{HTTP:Authorization} .
+	RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+	# Handle X-XSRF-Token Header
+	RewriteCond %{HTTP:x-xsrf-token} .
+	RewriteRule .* - [E=HTTP_X_XSRF_TOKEN:%{HTTP:X-XSRF-Token}]
+
+	# Redirect Trailing Slashes If Not A Folder...
+	RewriteCond %{REQUEST_FILENAME} !-d
+	RewriteCond %{REQUEST_URI} (.+)/$
+	RewriteRule ^ %1 [L,R=301]
+
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(.*)$ /public/$1 [L,QSA]
+
+
+	# Send Requests To Front Controller...
+	RewriteCond %{REQUEST_FILENAME} !-d
+	RewriteCond %{REQUEST_FILENAME} !-f
+	RewriteRule ^ index.php [L]
+    #laravel End
+
+
+    # USER_AGENT Block empty access
+    RewriteCond %{HTTP_USER_AGENT} ^-?$
+	# Block suspicious user agents and requests
+	RewriteCond %{HTTP_USER_AGENT} (libwww-perl|wget|python|nikto|curl|scan|java|winhttp|clshttp|loader) [NC,OR]
+	RewriteCond %{HTTP_USER_AGENT} (<|>|'|%0A|%0D|%27|%3C|%3E|%00) [NC,OR]
+	RewriteCond %{HTTP_USER_AGENT} (;|<|>|'|"|\)|\(|%0A|%0D|%22|%27|%28|%3C|%3E|%00).*(libwww-perl|wget|python|nikto|curl|scan|java|winhttp|HTTrack|clshttp|archiver|loader|email|harvest|extract|grab|miner) [NC,OR]
+	RewriteCond %{THE_REQUEST} \?\ HTTP/ [NC,OR]
+	RewriteCond %{THE_REQUEST} \/\*\ HTTP/ [NC,OR]
+	RewriteCond %{THE_REQUEST} etc/passwd [NC,OR]
+	RewriteCond %{THE_REQUEST} cgi-bin [NC,OR]
+	RewriteCond %{THE_REQUEST} (%0A|%0D) [NC,OR]
+	# Block MySQL injections
+    RewriteCond %{QUERY_STRING} [a-zA-Z0-9_]=http:// [OR]
+    RewriteCond %{QUERY_STRING} [a-zA-Z0-9_]=(\.\.//?)+ [OR]
+    RewriteCond %{QUERY_STRING} [a-zA-Z0-9_]=/([a-z0-9_.]//?)+ [NC,OR]
+    RewriteCond %{QUERY_STRING} \=PHP[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12} [NC,OR]
+    RewriteCond %{QUERY_STRING} (\.\./|\.\.) [OR]
+    RewriteCond %{QUERY_STRING} ftp\: [NC,OR]
+    RewriteCond %{QUERY_STRING} http\: [NC,OR]
+    RewriteCond %{QUERY_STRING} https\: [NC,OR]
+    RewriteCond %{QUERY_STRING} \=\|w\| [NC,OR]
+    RewriteCond %{QUERY_STRING} ^(.*)/self/(.*)$ [NC,OR]
+    RewriteCond %{QUERY_STRING} ^(.*)cPath=http://(.*)$ [NC,OR]
+    RewriteCond %{QUERY_STRING} (\<|%3C).*script.*(\>|%3E) [NC,OR]
+    RewriteCond %{QUERY_STRING} (<|%3C)([^s]*s)+cript.*(>|%3E) [NC,OR]
+    RewriteCond %{QUERY_STRING} (\<|%3C).*iframe.*(\>|%3E) [NC,OR]
+    RewriteCond %{QUERY_STRING} (<|%3C)([^i]*i)+frame.*(>|%3E) [NC,OR]
+    RewriteCond %{QUERY_STRING} base64_encode.*\(.*\) [NC,OR]
+    RewriteCond %{QUERY_STRING} base64_(en|de)code[^(]*\([^)]*\) [NC,OR]
+    RewriteCond %{QUERY_STRING} GLOBALS(=|\[|\%[0-9A-Z]{0,2}) [OR]
+    RewriteCond %{QUERY_STRING} _REQUEST(=|\[|\%[0-9A-Z]{0,2}) [OR]
+    RewriteCond %{QUERY_STRING} ^.*(\[|\]|\(|\)|<|>).* [NC,OR]
+    RewriteCond %{QUERY_STRING} (NULL|OUTFILE|LOAD_FILE) [OR]
+    RewriteCond %{QUERY_STRING} (\./|\../|\.../)+(motd|etc|bin) [NC,OR]
+    RewriteCond %{QUERY_STRING} (localhost|loopback|127\.0\.0\.1) [NC,OR]
+    RewriteCond %{QUERY_STRING} (<|>|'|%0A|%0D|%27|%3C|%3E|%00) [NC,OR]
+    RewriteCond %{QUERY_STRING} concat[^\(]*\( [NC,OR]
+    RewriteCond %{QUERY_STRING} union([^s]*s)+elect [NC,OR]
+    RewriteCond %{QUERY_STRING} union([^a]*a)+ll([^s]*s)+elect [NC,OR]
+    RewriteCond %{QUERY_STRING} (;|<|>|'|"|\)|%0A|%0D|%22|%27|%3C|%3E|%00).*(/\*|union|select|insert|drop|delete|update|cast|create|char|convert|alter|declare|order|script|set|md5|benchmark|encode) [NC,OR]
+    RewriteCond %{QUERY_STRING} (sp_executesql) [NC]
+    RewriteRule ^(.*)$ - [F,L]
+
+	#AI Block List Imitation learning
+	RewriteCond %{HTTP_USER_AGENT} (\.ai|-ai|_ai|ai\.|ai-|ai_|ai=|AddSearchBot|Agentic|AgentQL|Agent\ 3|Agent\ API|Agent-|AI\ Agent|AI\ Article\ Writer|AI\ Assistant|AI\ Chat|AI\ Content\ Detector|AI\ Detection|AI\ Dungeon) [NC,OR]
+	RewriteCond %{HTTP_USER_AGENT} (AI\ Journalist|AI\ Legion|AI\ RAG|AI\ Search|AI\ SEO\ Crawler|AI\ Training|AI\ Web|AI\ Writer|AI2|AIBot|aiHitBot|AIMatrix|Airesearch|AISearch|AITraining|Alexa|Alice\ Yandex|AliGenie|AliyunSec|Alpha\ AI) [NC,OR]
+	RewriteCond %{HTTP_USER_AGENT} (AlphaAI|Amazon|Amelia|AndersPinkBot|AndiBot|Anomura|Anonymous\ AI|Anthropic|AnyPicker|Anyword|Applebot|Aria\ AI|Aria\ Browse|Articoolo|Ask\ AI|Atlassian|AutoGen|Automated\ Writer|AutoML|Autonomous\ RAG) [NC,OR]
+	RewriteCond %{HTTP_USER_AGENT} (AutoRAG|Awario|AWS\ Trainium|Azure|BabyAGI|BabyCatAGI|BardBot|Basic\ RAG|Bedrock|Big\ Sur|Bigsur|Botsonic|Brightbot|Browser\ MCP\ Agent|Browser\ Use|BuddyBot|Bytebot|ByteDance|Bytespider|CarynAI) [NC,OR]
+	RewriteCond %{HTTP_USER_AGENT} (CatBoost|CC-Crawler|CCBot|Chai|Channel3Bot|Character|Charstar\ AI|Chatbot|Chatsonic|ChatUser|Chinchilla|Claude|ClearScope|Clearview|Cognitive\ AI|Cohere|Common\ Crawl|CommonCrawl|Compass|Content\ Harmony) [NC,OR]
+	RewriteCond %{HTTP_USER_AGENT} (Content\ King|Content\ Optimizer|Content\ Samurai|ContentAtScale|ContentBot|Contentedge|ContentShake|Conversion\ AI|Copilot|CopyAI|Copymatic|Copyscape|CoreWeave|Corrective\ RAG|Cotoyogi|CRAB|Crawl4AI|CrawlQ\ AI|Crawlspace|Crew\ AI) [NC,OR]
+	RewriteCond %{HTTP_USER_AGENT} (CrewAI|Crushon\ AI|Cypex|DALL-E|DarkBard|DarkBERT|DataFor|DataProvider|Datenbank\ Crawler|DeepAI|Deep\ AI|DeepL|DeepMind|Deep\ Research|DeepResearch|DeepSeek|Devin|Diffbot|Dolma|Doubao\ AI) [NC,OR]
+	RewriteCond %{HTTP_USER_AGENT} (DuckAssistBot|DuckDuckGo\ Chat|DuckDuckGo-Enhanced|Echobot|Echobox|Elixir|FacebookBot|FacebookExternalHit|Factset|Falcon|FIRE-1|Firebase|Firecrawl|Flyriver|Frase\ AI|FriendlyCrawler|Gato|Gemini|Gemma|Gen\ AI) [NC,OR]
+	RewriteCond %{HTTP_USER_AGENT} (GenAI|Generative|Genspark|Gentoo-chat|Ghostwriter|GigaChat|GLM|GodMode|Goose|GPT|Grammarly|Grendizer|Grok|Groq|GT\ Bot|GTBot|GTP|Hemingway\ Editor|Hetzner|Hugging) [NC,OR]
+	RewriteCond %{HTTP_USER_AGENT} (Hunyuan|Hybrid\ Search\ RAG|Hypotenuse\ AI|iAsk|IbouBot|ICC-Crawler|Ideogram|ImageGen|Imagen|ImagesiftBot|ImageSpider|img2dataset|imgproxy|INK\ Editor|INKforall|Instructor|IntelliSeek|Inferkit|ISSCyberRiskCrawler|Janitor\ AI) [NC,OR]
+	RewriteCond %{HTTP_USER_AGENT} (Jasper|Jenni\ AI|Julius\ AI|Kafkai|Kaggle|Kangaroo|Keyword\ Density\ AI|Kimi|Klaviyo|Knowledge|KomoBot|Kruti|KunatoCrawler|LAIONDownloader|LangChain|Langfuse|Language\ AI|Le\ Chat|Lensa|Leonardo) [NC,OR]
+	RewriteCond %{HTTP_USER_AGENT} (Lightpanda|LightRAG|LinerBot|LinkupBot|LLaMA|LCC|LLM|Local\ RAG\ Agent|Lovable|Magistral|magpie-crawler|MAI-Image|Manus|MarketMuse|MBZUAI|Meltwater|Meta-AI|Meta-External|Meta-Webindexer|Meta\ AI) [NC,OR]
+	RewriteCond %{HTTP_USER_AGENT} (MetaAI|MetaTagBot|Middleware|Midjourney|Mini\ AGI|MiniMax|Mintlify|Mistral|Mixtral|model-training|Molmo|Monica|Nano|Narrative|NeevaBot|netEstate|Neural\ Text|NeuralSEO|NinjaAI|NodeZero) [NC,OR]
+	RewriteCond %{HTTP_USER_AGENT} (NotebookLM|Nova\ Act|NovaAct|Nytheon|OAI-SearchBot|OAI\ SearchBot|OASIS|Olivia|OLM|Omgili|Onyx|Open\ AI|Open\ Interpreter|OpenAGI|OpenAI|OpenBot|OpenInterpreter|OpenPi|OpenRouter|OpenText\ AI) [NC,OR]
+	RewriteCond %{HTTP_USER_AGENT} (Operator|Outwrite|OVHcloud|Owlin|Page\ Analyzer\ AI|PaLM\ 2|PanguBot|Panscient|Paperlibot|Paraphraser\.io|peer39_crawler|Perflexity|Perplexity|Petal|Phind|PiplBot|Pixmo|Playwright|PoeBot|PoeSearchBot) [NC,OR]
+	RewriteCond %{HTTP_USER_AGENT} (Poggio|Poseidon|ProWritingAid|Proximic|PulsarRPA|Puppeteer|Python\ AI|Python\ lxml|PyTorch|Qualified|Quark|QuillBot|Qopywriter|Qwen|RAG\ Agent|RAG\ Azure\ AI|RAG\ Chatbot|RAG\ Database|RAG\ IS|RAG\ Pipeline) [NC,OR]
+	RewriteCond %{HTTP_USER_AGENT} (RAG\ Search|RAG\ with|RAG-|RAG_|Raptor|React\ Agent|Reasoning|Redis\ AI\ RAG|Reka\ Flash|Replicate|RobotSpider|RunPod|Rytr|SaplingAI|SBIntuitionsBot|Scala|Scalenut|Scrap|ScriptBook|Seekr) [NC,OR]
+	RewriteCond %{HTTP_USER_AGENT} (SEObot|SEO\ Content\ Machine|SEO\ Robot|SemrushBot|Sentibot|Serper|ShapBot|Sidetrade|Simplified\ AI|Sitefinity|Skydancer|Skyvern|SlickWrite|SmartBot|Sonic|Sora|Spider/2|SpiderCreator|Spin\ Rewrite|Spinbot) [NC,OR]
+	RewriteCond %{HTTP_USER_AGENT} (Stability|Stable\ Diffusion|StableDiffusionBot|Stagehand|Stealth|Sudowrite|SummalyBot|Super\ Agent|Superagent|SuperAGI|Surfer\ AI|Taiko|TavilyBot|TerraCotta|Text\ Blaze|TextCortex|Thinkbot|Thordata|TikTokSpider|Timpibot) [NC,OR]
+	RewriteCond %{HTTP_USER_AGENT} (Tinybird|Together|Traefik|Tulu|Tülu|TurnitinBot|TwinAgent|uAgents|UI-TARS|VelenPublicWebCrawler|Venus\ Chub\ AI|Vidnami\ AI|Vision\ RAG|WARDBot|WebSurfer|WebText|WebVoyager|Webzio|WeChat|Whisper) [NC,OR]
+	RewriteCond %{HTTP_USER_AGENT} (WordAI|Wordtune|WPBot|Writecream|WriterZen|Writescope|Writesonic|WRTNBot|xAI|Xanthorox|xBot|XLNet|YaK|YaML|YandexAdditional|YouBot|Zanista|Zendesk|Zero|Zhipu) [NC,OR]
+	RewriteCond %{HTTP_USER_AGENT} (Zhuque\ AI|Zimm) [NC]
+	RewriteRule (.*) - [F,L]
+
+</IfModule>
+
+# 開始封鎖常見搜尋引擎
+BrowserMatchNoCase "(?:\b)AdsBot-Google(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)Applebot(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)DoCoMo(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)Feedfetcher-Google(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)Google-HTTP-Java-Client(?:\b)" good_bot
+#BrowserMatchNoCase "(?:\b)Googlebot(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)Googlebot-Image(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)Googlebot-Mobile(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)Googlebot-News(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)Googlebot-Video(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)Googlebot/Test(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)Gravityscan(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)Jakarta\ Commons(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)Kraken/0.1(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)LinkedInBot(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)Mediapartners-Google(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)SAMSUNG(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)Slackbot(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)Slackbot-LinkExpanding(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)TwitterBot(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)Wordpress(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)adidxbot(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)aolbuild(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)bing(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)bingbot(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)bingpreview(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)developers.facebook.com(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)duckduckgo(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)facebookexternalhit(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)facebookplatform(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)gsa-crawler(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)msnbot(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)msnbot-media(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)slurp(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)teoma(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)yahoo(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)Lynx(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)Presto(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)Wget/1.15(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)jetmon(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)libwww-perl(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)munin(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)Alexa(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)ArchiveTeam(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)BUbiNG(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)Baidu(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)FlipboardProxy(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)MSIE\ 7.0(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)R6_CommentReader(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)R6_FeedFetcher(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)RED/1(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)RPT-HTTPClient(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)Spaidu(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)UptimeRobot/2.0(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)YandexBot(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)YandexImages(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)archive.org(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)ia_archiver(?:\b)" good_bot
+BrowserMatchNoCase "(?:\b)sfFeedReader/0.9(?:\b)" good_bot
+# 結束封鎖常見搜尋引擎
+# 開始封鎖全世界惡劣搜尋引擎
+BrowserMatchNoCase "(?:\b)1h4x.com(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)360Spider(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)404checker(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)404enemy(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)80legs(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)ADmantX(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)AIBOT(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)AIWebIndex(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)ALittle\ Client(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)ASPSeek(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Abonti(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Aboundex(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Aboundexbot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Acunetix(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)AdsTxtCrawlerTP(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)AfD-Verbotsverfahren(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)AhrefsBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Ai2Bot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)AiHitBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Aipbot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Alexibot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Aliyun(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)AliyunSecBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)AllSubmitter(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Alligator(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)AlphaBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Anarchie(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Anarchy(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Anarchy99(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Ankit(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Anthill(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Apexoo(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Aspiegel(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Asterias(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Atomseobot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Attach(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)AwarioBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)AwarioRssBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)AwarioSmartBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)BBBike(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)BDCbot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)BDFetch(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)BLEXBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)BackDoorBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)BackStreet(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)BackWeb(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Backlink-Ceck(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)BacklinkCrawler(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)BacklinksExtendedBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Badass(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Bandit(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Barkrowler(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)BatchFTP(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Battleztar\ Bazinga(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)BetaBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Bigfoot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Bitacle(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)BlackWidow(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Black\ Hole(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Blackboard(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Blow(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)BlowFish(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Boardreader(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Bolt(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)BotALot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Brandprotect(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Brandwatch(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Buck(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Buddy(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)BuiltBotTough(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)BuiltWith(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Bullseye(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)BunnySlippers(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)BuzzSumo(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Bytespider(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)CATExplorador(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)CCBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)CODE87(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)CSHttp(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Calculon(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)CazoodleBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Cegbfeieh(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)CensysInspect(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)ChatGPT-User(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)CheTeam(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)CheeseBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)CherryPicker(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)ChinaClaw(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Chlooe(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Citoid(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Claritybot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)ClaudeBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Cliqzbot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Cloud\ mapping(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Cocolyzebot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Cogentbot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Collector(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Copier(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)CopyRightCheck(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Copyscape(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Cosmos(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Craftbot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Crawling\ at\ Home\ Project(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)CrazyWebCrawler(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Crescent(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)CrunchBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Curious(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Custo(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)CyotekWebCopy(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)DBLBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)DIIbot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)DSearch(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)DTS\ Agent(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)DataCha0s(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)DatabaseDriverMysqli(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Demon(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Deusu(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Devil(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Digincore(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)DigitalPebble(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Dirbuster(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Disco(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Discobot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Discoverybot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Dispatch(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)DittoSpyder(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)DnBCrawler-Analytics(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)DnyzBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)DomCopBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)DomainAppender(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)DomainCrawler(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)DomainSigmaCrawler(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)DomainStatsBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Domains\ Project(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Dotbot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Download\ Wonder(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Dragonfly(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Drip(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)ECCP/1.0(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)EMail\ Siphon(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)EMail\ Wolf(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)EasyDL(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Ebingbong(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Ecxi(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)EirGrabber(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)EroCrawler(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Evil(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Exabot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Express\ WebPictures(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)ExtLinksBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Extractor(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)ExtractorPro(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Extreme\ Picture\ Finder(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)EyeNetIE(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Ezooms(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)FDM(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)FHscan(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)FacebookBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)FemtosearchBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Fimap(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Firefox/7.0(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)FlashGet(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Flunky(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Foobot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Freeuploader(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)FrontPage(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Fuzz(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)FyberSpider(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Fyrebot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)G-i-g-a-b-o-t(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)GPTBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)GT::WWW(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)GalaxyBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)GeedoProductSearch(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Genieo(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)GermCrawler(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)GetRight(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)GetWeb(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Getintent(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Gigabot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Go!Zilla(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Go-Ahead-Got-It(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)GoZilla(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Gotit(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)GrabNet(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Grabber(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Grafula(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)GrapeFX(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)GrapeshotCrawler(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)GridBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)HEADMasterSEO(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)HMView(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)HTMLparser(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)HTTP::Lite(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)HTTrack(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Haansoft(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)HaosouSpider(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Harvest(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Havij(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Heritrix(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Hloader(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)HonoluluBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Humanlinks(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)HybridBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)IDBTE4M(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)IDBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)IRLbot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Iblog(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Id-search(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)IlseBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Image\ Fetch(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Image\ Sucker(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)ImagesiftBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)IndeedBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Indy\ Library(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)InfoNaviRobot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)InfoTekies(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Information\ Security\ Team\ InfraSec\ Scanner(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)InfraSec\ Scanner(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Intelliseek(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)InterGET(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)InternetMeasurement(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)InternetSeer(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Internet\ Ninja(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Iria(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Iskanie(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)IstellaBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)JOC\ Web\ Spider(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)JamesBOT(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Jbrofuzz(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)JennyBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)JetCar(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Jetty(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)JikeSpider(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Joomla(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Jorgee(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)JustView(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Jyxobot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Kenjin\ Spider(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Keybot\ Translation-Search-Machine(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Keyword\ Density(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Kinza(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Kozmosbot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)LNSpiderguy(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)LWP::Simple(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Lanshanbot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Larbin(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Leap(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)LeechFTP(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)LeechGet(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)LexiBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Lftp(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)LibWeb(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Libwhisker(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)LieBaoFast(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Lightspeedsystems(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Likse(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)LinkScan(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)LinkWalker(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Linkbot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)LinkextractorPro(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)LinkpadBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)LinksManager(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)LinqiaMetadataDownloaderBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)LinqiaRSSBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)LinqiaScrapeBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Lipperhey(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Lipperhey\ Spider(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Litemage_walker(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Lmspider(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Ltx71(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)MFC_Tear_Sample(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)MIDown\ tool(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)MIIxpc(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)MJ12bot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)MQQBrowser(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)MSFrontPage(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)MSIECrawler(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)MTRobot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Mag-Net(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Magnet(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Mail.RU_Bot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Majestic-SEO(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Majestic12(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Majestic\ SEO(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)MarkMonitor(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)MarkWatch(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Mass\ Downloader(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Masscan(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Mata\ Hari(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)MauiBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Mb2345Browser(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)MeanPath\ Bot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Meanpathbot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Mediatoolkitbot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)MegaIndex.ru(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Metauri(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)MicroMessenger(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Microsoft\ Data\ Access(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Microsoft\ URL\ Control(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Minefield(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Mister\ PiX(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Moblie\ Safari(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Mojeek(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Mojolicious(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)MolokaiBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Morfeus\ Fucking\ Scanner(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Mozlila(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Mr.4x3(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Msrabot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Musobot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)NICErsPRO(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)NPbot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Name\ Intelligence(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Nameprotect(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Navroad(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)NearSite(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Needle(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Nessus(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)NetAnts(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)NetLyzer(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)NetMechanic(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)NetSpider(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)NetZIP(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Net\ Vampire(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Netcraft(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Nettrack(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Netvibes(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)NextGenSearchBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Nibbler(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Niki-bot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Nikto(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)NimbleCrawler(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Nimbostratus(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Ninja(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Nmap(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Nuclei(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Nutch(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Octopus(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Odin(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Offline\ Explorer(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Offline\ Navigator(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)OnCrawl(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)OpenLinkProfiler(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)OpenVAS(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Openfind(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Openvas(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)OrangeBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)OrangeSpider(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)OutclicksBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)OutfoxBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)PECL::HTTP(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)PHPCrawl(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)POE-Component-Client-HTTP(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)PageAnalyzer(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)PageGrabber(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)PageScorer(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)PageThing.com(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Page\ Analyzer(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Pandalytics(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Panscient(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Papa\ Foto(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Pavuk(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)PeoplePal(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Petalbot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Pi-Monster(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Picscout(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Picsearch(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)PictureFinder(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Piepmatz(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Pimonster(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Pixray(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)PleaseCrawl(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Pockey(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)ProPowerBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)ProWebWalker(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Probethenet(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Proximic(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Psbot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Pu_iN(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Pump(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)PxBroker(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)PyCurl(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)QueryN\ Metasearch(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Quick-Crawler(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)RSSingBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Rainbot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)RankActive(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)RankActiveLinkBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)RankFlex(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)RankingBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)RankingBot2(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Rankivabot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)RankurBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Re-re(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)ReGet(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)RealDownload(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Reaper(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)RebelMouse(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Recorder(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)RedesScrapy(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)RepoMonkey(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Ripper(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)RocketCrawler(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Rogerbot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)SBIder(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)SEBot-WA(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)SEOkicks(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)SEOkicks-Robot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)SEOlyt(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)SEOlyticsCrawler(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)SEOprofiler(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)SEOstats(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)SISTRIX(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)SMARTSEO-checker(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)SMTBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)SalesIntelligent(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)ScanAlert(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Scanbot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)ScoutJet(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Scrapy(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Screaming(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)ScreenerBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)ScrepyBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Searchestate(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)SearchmetricsBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Seekport(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)SeekportBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)SemanticJuice(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Semrush(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)SemrushBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)SemrushBot-BA(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)SemrushBot-FT(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)SemrushBot-OCOB(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)SemrushBot-SI(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)SemrushBot-SWA(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)SentiBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)SenutoBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)SeoCherryBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)SeoSiteCheckup(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)SeobilityBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Seomoz(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Shodan(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Siphon(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)SiteAuditBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)SiteCheckerBotCrawler(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)SiteExplorer(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)SiteLockSpider(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)SiteSnagger(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)SiteSucker(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Site\ Sucker(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Sitebeam(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Siteimprove(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Sitevigil(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)SlySearch(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)SmartDownload(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Snake(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Snapbot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Snoopy(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)SocialRankIOBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Sociscraper(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Sogou\ web\ spider(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Sosospider(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Sottopop(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)SpaceBison(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Spammen(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)SpankBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Spanner(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Spbot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Spider_Bot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Spider_Bot/3.0(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Spinn3r(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)SplitSignalBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)SputnikBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Sqlmap(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Sqlworm(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Sqworm(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Steeler(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Stripper(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Sucker(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Sucuri(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)SuperBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)SuperHTTP(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Surfbot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)SurveyBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Suzuran(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Swiftbot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Szukacz(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)T0PHackTeam(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)T8Abot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)TLM-Audit-Scanner(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)TMP(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Teleport(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)TeleportPro(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Telesoft(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Telesphoreo(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Telesphorep(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)TheNomad(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)The\ Intraformant(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Thumbor(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)TightTwatBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)TinyTestBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Titan(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Toata(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Toweyabot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Tracemyfile(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Trendiction(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Trendictionbot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)True_Robot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Turingos(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Turnitin(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)TurnitinBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)TwengaBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Twice(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Typhoeus(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)URLy.Warning(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)URLy\ Warning(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)UnisterBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Upflow(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)V-BOT(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)VB\ Project(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)VCI(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Vacuum(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Vagabondo(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)VelenPublicWebCrawler(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)VeriCiteCrawler(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)VidibleScraper(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Virusdie(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)VoidEYE(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Voil(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Voltron(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)WASALive-Bot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)WBSearchBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)WEBDAV(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)WISENutbot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)WPScan(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)WWW-Collector-E(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)WWW-Mechanize(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)WWW::Mechanize(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)WWWOFFLE(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Wallpapers(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Wallpapers/3.0(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)WallpapersHD(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)WeSEE(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)WebAuto(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)WebBandit(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)WebCollage(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)WebCopier(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)WebEnhancer(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)WebFetch(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)WebFuck(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)WebGo\ IS(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)WebImageCollector(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)WebLeacher(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)WebPix(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)WebReaper(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)WebSauger(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)WebStripper(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)WebSucker(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)WebWhacker(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)WebZIP(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Web\ Auto(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Web\ Collage(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Web\ Enhancer(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Web\ Fetch(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Web\ Fuck(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Web\ Pix(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Web\ Sauger(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Web\ Sucker(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Webalta(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)WebmasterWorldForumBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Webshag(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)WebsiteExtractor(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)WebsiteQuester(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Website\ Quester(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Webster(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Whack(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Whacker(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Whatweb(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Who.is\ Bot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Widow(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)WinHTTrack(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)WiseGuys\ Robot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Wonderbot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Woobot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Wotbox(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Wprecon(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Xaldon\ WebSpider(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Xaldon_WebSpider(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Xenu(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)YaK(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)YoudaoBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Zade(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Zauba(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Zermelo(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Zeus(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)Zitebot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)ZmEu(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)ZoomBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)ZoominfoBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)ZumBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)ZyBorg(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)adscanner(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)allenai.org(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)anthropic-ai(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)archive.org_bot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)aria2(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)arquivo-web-crawler(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)arquivo.pt(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)autoemailspider(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)awario.com(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)backlink-check(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)cah.io.community(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)check1.exe(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)clark-crawler(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)coccocbot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)cognitiveseo(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)cohere-ai(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)com.plumanalytics(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)crawl.sogou.com(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)crawler.feedback(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)crawler4j(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)dataforseo.com(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)dataforseobot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)dataprovider(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)demandbase-bot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)domainsproject.org(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)eCatch(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)evc-batch(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)everyfeed-spider(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)facebookscraper(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)fasthttp(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)git(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)gopher(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)heritrix(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)imagesift.com(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)instabid(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)internetVista\ monitor(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)ips-agent(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)isitwp.com(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)iubenda-radar(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)l9scan(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)leakix(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)libredtail-http(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)linkdexbot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)linkfluence(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)lwp-request(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)lwp-trivial(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)magpie-crawler(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)meanpathbot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)mediawords(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)muhstik-scan(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)netEstate\ NE\ Crawler(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)oBot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)omgili(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)openai(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)openai.com(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)opendirme-credhunt(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)page\ scorer(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)pcBrowser(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)plumanalytics(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)polaris\ version(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)probe-image-size(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)ripz(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)s1z.ru(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)satoristudio.net(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)scalaj-http(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)scan.lol(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)seobility(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)seocompany.store(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)seoscanners(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)seostar(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)serpstatbot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)sexsearcher(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)sitechecker.pro(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)siteripz(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)smart-seo-tools.sbs(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)sogouspider(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)sp_auditbot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)spyfu(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)sysscan(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)tAkeOut(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)terrabot-owned-you(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)trafilatura(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)trendiction.com(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)trendiction.de(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)ubermetrics-technologies.com(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)voyagerx.com(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)webgains-bot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)webmeup-crawler(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)webpros.com(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)webprosbot(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)x09Mozilla(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)x22Mozilla(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)xpymep1.exe(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)zauba.io(?:\b)" bad_bot
+BrowserMatchNoCase "(?:\b)zgrab(?:\b)" bad_bot
+# 結束封鎖全世界惡劣搜尋引擎
+
+<RequireAny>
+	Require env good_bot
+	Require env bad_bot
+</RequireAny>
+
+<FilesMatch "(composer.json|package.json|package-lock.json|yarn.json)$">
+    Require all denied
+</FilesMatch>
+
+<Files ~ "\.(env|htaccess|htpasswd|ini|bak|old|log|sh|sql|md|test)$">
+  Require all denied
+</Files>
+
+#Enable Keep-Alive Headers
+<IfModule mod_headers.c>
+    Header unset Server
+    Header unset X-Powered-By
+    Header unset X-AspNet-Version
+	Header unset ETag
+	Header unset Date
+	Header always unset X-Powered-By
+	Header unset Content-Length
+	Header unset X-Pad
+   	Header set Connection Keep-Alive
+</IfModule>
+
+#Gzip compression
+<IfModule mod_gzip.c>
+   mod_gzip_on       Yes
+   mod_gzip_dechunk  Yes
+   mod_gzip_item_include file      .(html?|txt|css|js|php|pl|jpg|jpeg|png|gif|bmp)$
+   mod_gzip_item_include handler   ^cgi-script$
+   mod_gzip_item_include mime      ^text/.*
+   mod_gzip_item_include mime      ^application/x-javascript.*
+   mod_gzip_item_exclude mime      ^image/.*
+   mod_gzip_item_exclude rspheader ^Content-Encoding:.*gzip.*
+</IfModule>
+
+#限制後臺路徑只允許給某固定 ip 訪問
+<If "%{REQUEST_URI} =~ m#^/dashboards#">
+    <RequireAll>
+        Require all granted
+        #Require ip 127.0.0.1
+    </RequireAll>
+</If>
+
+<RequireAny>
+ 	<RequireAll>
+	Require all granted
+	#不允許 ip
+	#Require not ip 192.168.1.0/24
+
+    #允許 ip
+	#Require ip 192.168.1.0/24
+ 	</RequireAll>
+</RequireAny>
+

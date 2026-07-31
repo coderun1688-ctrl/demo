@@ -1,0 +1,107 @@
+* {
+    font-family: 'Microsoft JhengHei';
+}
+a {
+    text-decoration: none;
+}
+textarea{resize:none;}
+
+ul, ol {
+    list-style: none;
+}
+body {
+    background: #fff;
+}
+
+.parent {
+    display: flex;
+    justify-content: center; /* 水平置中 */
+    align-items: center;    /* 垂直置中 */
+    height: 100vh;          /* 需設定父層高度以利垂直對齊 */
+
+}
+
+.heightauto{
+    min-height:600px;
+    height:auto !important;
+    height:100px;
+}
+
+.page-count{display: block;}
+
+/* 平板與桌面版樣式 */
+@media (max-width: 768px) {
+
+    .page-count{display: none;}
+    .page-link {
+        position: relative;
+        display: block;
+        margin: 0px 5px 0px 5px;
+        padding: var(--bs-pagination-padding-y) var(--bs-pagination-padding-x);
+        font-size: var(--bs-pagination-font-size);
+        color: var(--bs-pagination-color);
+        text-decoration: none;
+        background-color: var(--bs-pagination-bg);
+        border: var(--bs-pagination-border-width) solid var(--bs-pagination-border-color);
+        transition: color .15s ease-in-out, background-color .15s ease-in-out, border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+        width:40px;
+        height:40px;
+        -khtml-border-radius:20px;
+        -moz-border-radius:20px;
+        -webkit-border-radius:20px;
+        border-radius:20px;
+        text-align: center;
+    }
+
+    .page-item:first-child .page-link {
+        width:40px;
+        height:40px;
+        -khtml-border-radius:20px;
+        -moz-border-radius:20px;
+        -webkit-border-radius:20px;
+        border-radius:20px;
+        text-align: center;
+    }
+
+    .page-item:last-child .page-link {
+        width:40px;
+        height:40px;
+        -khtml-border-radius:20px;
+        -moz-border-radius:20px;
+        -webkit-border-radius:20px;
+        border-radius:20px;
+        text-align: center;
+    }
+
+    /* 隱藏表頭 */
+    .ResponsiveTable table {
+        border:unset !important;
+    }
+
+    .ResponsiveTable thead {
+        display: none;
+    }
+
+    /* 將每一個 tr 轉為區塊，當作一張卡片 */
+    .ResponsiveTable tr {
+        display: block;
+        margin-bottom: 15px;
+        /*border: 1px solid #ccc;*/
+        padding: 10px;
+    }
+
+    /* 將每一個 td 轉為橫列，並在前方加上標題 */
+    .ResponsiveTable td {
+        display: flex;
+        /*justify-content: space-between;*/
+        padding: 10px 0;
+        border-bottom: 1px solid #eee;
+    }
+
+    .ResponsiveTable td::before {
+        content: attr(data-label); /* 抓取 td 上的 data-label 屬性作為標題 */
+        font-weight: bold;
+        color: #333;
+        padding-right: 15px;
+    }
+}
